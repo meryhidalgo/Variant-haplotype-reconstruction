@@ -65,40 +65,141 @@ conda create -n haplotyping \
 
 # Input files
 
-## 1. Phased VCFs directory
+## 1. Phased VCFs
 
-Compressed and indexed phased VCF files generated with tools such as WhatsHap. They are expected to be named as: 
+Compressed and indexed phased VCF files generated with tools such as WhatsHap.
+
+Example:
 
 ```text
 sample_whatshap.vcf.gz
 sample_whatshap.vcf.gz.tbi
 ```
 
-## 2. Variant annotation file
+VCF files should contain:
 
-Name of 3 
+- phased genotypes (`0|1`, `1|0`)
+- phase set (`PS`) information
 
+Example directory structure:
+
+```text
+vcfs_wider/
+├── sample1_whatshap.vcf.gz
+├── sample1_whatshap.vcf.gz.tbi
+├── sample2_whatshap.vcf.gz
+└── sample2_whatshap.vcf.gz.tbi
+```
+
+---
+
+## 2. Heterozygous carrier samples
+
+Three heterozygous individuals carrying the variant or locus of interest must be provided.
+
+These individuals are used to:
+
+- identify shared cis-associated variants
+
+- define the shared haplotypic interval
+
+- reconstruct the candidate founder haplotype
+
+The workflow searches for variants shared in at least two of the three heterozygous individuals to define the haplotype block boundaries.
+
+Samples are provided as a comma-separated list:
+
+```bash
+
+-s 23GM4915,25_3624,AT015
+
+```
+
+Sample names must match the VCF filenames:
+
+```text
+
+23GM4915_whatshap.vcf.gz
+
+25_3624_whatshap.vcf.gz
+
+AT015_whatshap.vcf.gz
+
+```
+
+---
 
 ## 3. Genomic position of interest
 
-Genomic coordinate associated with the target variant.
+Genomic coordinate associated with the target locus.
 
 Example:
 
 ```bash
-POS="chr16:89511445"
+chr16:89511445
 ```
 
-This position may correspond to SNV, indel, STR expansion etc, but must be reported in the vcf files. 
+The workflow is compatible with:
+
+- SNVs
+- indels
+- STR expansions
+- structural variant-associated loci
+
+---
 
 ## 4. Variant annotation file
 
-Annotation file containing rsIDs or genomic annotations.
+Tabular annotation file containing genomic positions and rsIDs. You can download this file from the UCSC Table Browser [https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=varRep&hgta_track=dbSnp155Composite&hgta_table=dbSnp155].
 
-Example:
+It will be necessary to select a region of interest, be sure it is wide enough. In output format, "selected fields from primary and related tables" can be selected so only the next columns are exported: 
+- 	chrom:	Reference sequence chromosome or scaffold
+-	chromStart:	Start position in chrom
+-	chromEnd:	End position in chrom
+-	name:	dbSNP Reference SNP (rs) identifier
+-	ref:	Reference allele; usually major allele, but may be minor allele
+- 	alts:	Alternate (non-reference) alleles; may include major allele
 
-```text
-hg38_891-092M.summary.tsv
+Be sure it is tsv format. 
+
+This file is used to annotate variants and identify known SNPs within the reconstructed haplotypes.
+
+---
+
+# Command-line arguments
+
+The pipeline is executed using:
+
+```bash
+bash run_haplotyping.sh \
+    -d <vcf_directory> \
+    -p <genomic_position> \
+    -s <sample1,sample2,...> \
+    -v <variant_annotation_file> \
+    -o <output_directory>
+```
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `-d` | Directory containing phased VCF files |
+| `-p` | Genomic position of interest |
+| `-s` | Comma-separated sample names |
+| `-v` | Variant annotation file |
+| `-o` | Output directory |
+
+---
+
+# Example execution
+
+```bash
+bash run_haplotyping.sh \
+    -d vcfs \
+    -p chr16:89511445 \
+    -s 23GM4915,25_3624,AT015 \
+    -v hg38_891-092M.summary.tsv \
+    -o haplotyping
 ```
 
 ---
@@ -115,7 +216,7 @@ For each sample:
 Output:
 
 ```text
-haplotyping/txtfiles_heteros/
+$output/txtfiles_heteros/
 ```
 
 ---
@@ -125,7 +226,7 @@ haplotyping/txtfiles_heteros/
 Script:
 
 ```bash
-python3 5-1-define_block.py
+python3 1-define_block.py
 ```
 
 This step:
@@ -149,7 +250,7 @@ All phased variants located within the shared interval are extracted for each sa
 Output:
 
 ```text
-haplotyping/txtfiles_all/
+$output/txtfiles_all/
 ```
 
 ---
@@ -159,7 +260,7 @@ haplotyping/txtfiles_all/
 Script:
 
 ```bash
-python3 5-2-search_variants.py
+python3 2-search_variants.py
 ```
 
 This step identifies:
@@ -171,24 +272,7 @@ This step identifies:
 
 ---
 
-# Example execution
 
-```bash
-bash run_haplotyping.sh
-```
-
----
-
-# Applications
-
-- Founder effect analysis
-- Haplotype reconstruction
-- Long-read phasing studies
-- Cis-variant identification
-- Shared ancestry analysis
-- Variant background characterization
-
----
 
 # Notes
 
@@ -206,39 +290,18 @@ variant-haplotype-reconstruction/
 │
 ├── scripts/
 │   ├── run_haplotyping.sh
-│   ├── 5-1-define_block.py
-│   └── 5-2-search_variants.py
+│   ├── 1-define_block.py
+│   └── 2-search_variants.py
 │
 ├── example/
-│
-├── docs/
-│
-├── environment.yml
 │
 └── README.md
 ```
 
----
-
-# Future improvements
-
-Potential extensions include:
-
-- haplotype visualization
-- BAM haplotag integration
-- multi-sample VCF support
-- structural variant integration
-- graphical haplotype block representation
-- automated founder haplotype detection
 
 ---
 
 # Citation
 
-If you use this repository, please cite the corresponding study or repository release.
+If you use this repository, please cite our work. 
 
-## 3. Variant annotation file
-
-Annotation file containing rsIDs or genomic annotations.
-
-Example:

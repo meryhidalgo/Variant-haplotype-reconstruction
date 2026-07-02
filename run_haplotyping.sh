@@ -1,7 +1,4 @@
 #!/bin/bash
-#conda activate haplotyping 
-# conda create -n haplotyping -c conda-forge -c bioconda bcftools htslib tabix pandas
-
 set -euo pipefail
 
 usage() {
@@ -65,7 +62,7 @@ for sample in "${samples[@]}"; do
 done
 
 # define shared block
-json=$(python3 1-define_block.py \
+json=$(python 1-define_block.py \
     "$POS" \
     "${OUTPUT_DIR}/txtfiles_heteros" \
     "$VARIANT_ANNOTATION_FILE" \
@@ -95,7 +92,7 @@ for vcf in ${VCF_DIR}/*.vcf.gz; do
 done
 
 # compare haplotypes
-python3 2-search_variants.py \
+python 2-search_variants.py \
     "$POS" \
     "$hetero_cis_file" \
     "${OUTPUT_DIR}/txtfiles_all" \
