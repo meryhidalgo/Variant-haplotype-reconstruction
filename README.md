@@ -37,22 +37,7 @@ This enables comparison of haplotype backgrounds associated with recurrent patho
 
 ---
 
-# Requirements
-
-## Software
-
-- Bash
-- Python >= 3.8
-- bcftools
-- htslib
-- tabix
-- jq
-
-## Python dependencies
-
-- pandas
-
-## Suggested conda environment
+# Suggested conda environment
 
 ```bash
 conda create -n haplotyping \
