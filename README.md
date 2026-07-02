@@ -43,7 +43,7 @@ This enables comparison of haplotype backgrounds associated with recurrent patho
 conda create -n haplotyping \
     -c conda-forge \
     -c bioconda \
-    bcftools htslib tabix jq pandas
+    bcftools htslib tabix jq pandas matplotlib
 ```
 
 ---
@@ -85,9 +85,7 @@ Three heterozygous individuals carrying the variant or locus of interest must be
 These individuals are used to:
 
 - identify shared cis-associated variants
-
 - define the shared haplotypic interval
-
 - reconstruct the candidate founder haplotype
 
 The workflow searches for variants shared in at least two of the three heterozygous individuals to define the haplotype block boundaries.
@@ -97,7 +95,6 @@ Samples are provided as a comma-separated list:
 ```bash
 
 -s 23GM4915,25_3624,AT015
-
 ```
 
 Sample names must match the VCF filenames:
@@ -109,7 +106,6 @@ Sample names must match the VCF filenames:
 25_3624_whatshap.vcf.gz
 
 AT015_whatshap.vcf.gz
-
 ```
 
 ---
@@ -135,17 +131,18 @@ The workflow is compatible with:
 
 ## 4. Variant annotation file
 
-Tabular annotation file containing genomic positions and rsIDs. You can download this file from the UCSC Table Browser [https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=varRep&hgta_track=dbSnp155Composite&hgta_table=dbSnp155].
+Tabular annotation file containing genomic positions and rsIDs. You can download this file from the [UCSC Table Browser] (https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=varRep&hgta_track=dbSnp155Composite&hgta_table=dbSnp155).
 
-It will be necessary to select a region of interest, be sure it is wide enough. In output format, "selected fields from primary and related tables" can be selected so only the next columns are exported: 
-- 	chrom:	Reference sequence chromosome or scaffold
--	chromStart:	Start position in chrom
--	chromEnd:	End position in chrom
--	name:	dbSNP Reference SNP (rs) identifier
--	ref:	Reference allele; usually major allele, but may be minor allele
-- 	alts:	Alternate (non-reference) alleles; may include major allele
+It will be necessary to select a region of interest, be sure it is wide enough. In output format, "selected fields from primary and related tables" can be selected so only the next columns are exported:
 
-Be sure it is tsv format. 
+- chrom:	Reference sequence chromosome or scaffold
+- chromStart:	Start position in chrom
+- chromEnd:	End position in chrom
+- name:	dbSNP Reference SNP (rs) identifier
+- ref:	Reference allele; usually major allele, but may be minor allele
+- alts:	Alternate (non-reference) alleles; may include major allele
+
+Be sure it is tsv format. An example can be found in example repository.
 
 This file is used to annotate variants and identify known SNPs within the reconstructed haplotypes.
 
@@ -166,13 +163,13 @@ bash run_haplotyping.sh \
 
 ## Arguments
 
-| Argument | Description |
-|---|---|
-| `-d` | Directory containing phased VCF files |
-| `-p` | Genomic position of interest |
-| `-s` | Comma-separated sample names |
-| `-v` | Variant annotation file |
-| `-o` | Output directory |
+| Argument | Description                           |
+| -------- | ------------------------------------- |
+| `-d`   | Directory containing phased VCF files |
+| `-p`   | Genomic position of interest          |
+| `-s`   | Comma-separated sample names          |
+| `-v`   | Variant annotation file               |
+| `-o`   | Output directory                      |
 
 ---
 
@@ -257,8 +254,6 @@ This step identifies:
 
 ---
 
-
-
 # Notes
 
 - The workflow assumes phased genotypes (`0|1`, `1|0`)
@@ -279,14 +274,13 @@ variant-haplotype-reconstruction/
 │   └── 2-search_variants.py
 │
 ├── example/
+│   └── hg38_891-092M.summary.tsv
 │
 └── README.md
 ```
-
 
 ---
 
 # Citation
 
-If you use this repository, please cite our work. 
-
+If you use this repository, please cite our work.

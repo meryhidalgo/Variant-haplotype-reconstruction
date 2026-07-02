@@ -41,6 +41,11 @@ for vcf in ${VCF_DIR}/*.vcf; do
     fi
 done
 
+# summary file for haplotype blocks
+BLOCK_SUMMARY="${OUTPUT_DIR}/haplotype_blocks.tsv"
+
+echo -e "sample\tBlock_id\tstart\tend" > "$BLOCK_SUMMARY"
+
 # extract heterozygous phased variants
 for sample in "${samples[@]}"; do
     VCF="${VCF_DIR}/${sample}_whatshap.vcf.gz"
@@ -59,7 +64,20 @@ for sample in "${samples[@]}"; do
             print
         }
     ' > "${OUTPUT_DIR}/txtfiles_heteros/${sample}_heteros.txt"
+
+    # define block coordinates
+    s=$(awk 'NR==1 {print $2}' "${OUTPUT_DIR}/txtfiles_heteros/${sample}_heteros.txt")
+    e=$(awk '
+        BEGIN{max=0}
+        {
+            if ($2 > max)
+                max=$2
+        }
+        END{print max}
+    ' "${OUTPUT_DIR}/txtfiles_heteros/${sample}_heteros.txt")
+    echo -e "${sample}\t${PS}\t${s}\t${e}" >> "$BLOCK_SUMMARY"
 done
+
 
 # define shared block
 json=$(python 1-define_block.py \
@@ -74,6 +92,15 @@ hetero_cis_file=$(echo "$json" | jq -r .hetero_cis_file)
 echo "Shared block:"
 echo "START=$start"
 echo "END=$end"
+
+mkdir -p "${OUTPUT_DIR}/plots"
+
+python 2-plot_block.py \
+    "${OUTPUT_DIR}/haplotype_blocks.tsv" \
+    "$POS" \
+    "$start" \
+    "$end" \
+    "${OUTPUT_DIR}/plots/"
 
 # extract all variants within interval
 for vcf in ${VCF_DIR}/*.vcf.gz; do
@@ -92,7 +119,7 @@ for vcf in ${VCF_DIR}/*.vcf.gz; do
 done
 
 # compare haplotypes
-python 2-search_variants.py \
+python 3-search_variants.py \
     "$POS" \
     "$hetero_cis_file" \
     "${OUTPUT_DIR}/txtfiles_all" \
