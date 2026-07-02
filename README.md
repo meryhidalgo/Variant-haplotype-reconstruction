@@ -65,22 +65,21 @@ conda create -n haplotyping \
 
 # Input files
 
-## 1. Phased VCFs
+## 1. Phased VCFs directory
 
-Compressed and indexed phased VCF files generated with tools such as WhatsHap:
+Compressed and indexed phased VCF files generated with tools such as WhatsHap. They are expected to be named as: 
 
 ```text
 sample_whatshap.vcf.gz
 sample_whatshap.vcf.gz.tbi
 ```
 
-Stored inside:
+## 2. Variant annotation file
 
-```text
-vcfs_wider/
-```
+Name of 3 
 
-## 2. Genomic position of interest
+
+## 3. Genomic position of interest
 
 Genomic coordinate associated with the target variant.
 
@@ -90,17 +89,11 @@ Example:
 POS="chr16:89511445"
 ```
 
-This position may correspond to:
+This position may correspond to SNV, indel, STR expansion etc, but must be reported in the vcf files. 
 
-- SNVs
-- indels
-- STR expansions
-- structural variants
-- recurrent pathogenic loci
+## 4. Variant annotation file
 
-## 3. Variant annotation file
-
-Optional annotation file containing rsIDs or genomic annotations.
+Annotation file containing rsIDs or genomic annotations.
 
 Example:
 
@@ -243,3 +236,9 @@ Potential extensions include:
 # Citation
 
 If you use this repository, please cite the corresponding study or repository release.
+
+## 3. Variant annotation file
+
+Annotation file containing rsIDs or genomic annotations.
+
+Example:
