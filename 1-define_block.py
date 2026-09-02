@@ -31,32 +31,31 @@ def variantes_cis(archivo, var_interes_pos):
 
 
 if __name__ == "__main__":
-    var_interest = sys.argv[1]
+    min_samples = int(sys.argv[1])
+    var_interest = sys.argv[2]
     var_interest_chr = var_interest.split(":")[0]
     var_interest_pos = int(var_interest.split(":")[1])
 
-    txt_dir = sys.argv[2]  # Directory where the txt files are located
+    txt_dir = sys.argv[3]  # Directory where the txt files are located
     txt_files = [os.path.join(txt_dir, f) for f in os.listdir(txt_dir) if f.endswith("_heteros.txt")]
     if len(txt_files) == 0:
-        print(f"No txt files were found in the directory {txt_dir}")
+        print(f"No txt files were found in the directory {txt_dir}", file=sys.stderr)
         sys.exit(1)
-    elif len(txt_files) < 3 or len(txt_files) > 3:
-        print(f"A number other than 3 txt files was found in the directory {txt_dir}. Make sure that only the files of interest are included.")
+    elif len(txt_files) < min_samples:
+        print(f"A number less than {min_samples} txt files was found in the directory {txt_dir}. Please adjust the number of files.", file=sys.stderr)
         sys.exit(1)
     
-    hap1 = variantes_cis(txt_files[0], var_interest_pos)
-    hap2 = variantes_cis(txt_files[1], var_interest_pos)
-    hap3 = variantes_cis(txt_files[2], var_interest_pos)
 
-    dbSNP_file = sys.argv[3]
+    dbSNP_file = sys.argv[4]
+    if not os.path.exists(dbSNP_file):
+        print(f"dbSNP file {dbSNP_file} does not exist.", file=sys.stderr)
+        sys.exit(1)
     dbSNP_all = pd.read_csv(dbSNP_file, sep="\t", header=0)
 
-    hap1["sample"] = "hetero1"
-    hap2["sample"] = "hetero2"
-    hap3["sample"] = "hetero3"
-
-    # Concatenate
-    all_df = pd.concat([hap1, hap2, hap3])
+    for f in txt_files:
+        hap = variantes_cis(f, var_interest_pos)
+        hap["sample"] = os.path.basename(f).replace("_heteros.txt", "")
+        all_df = hap if 'all_df' not in locals() else pd.concat([all_df, hap])
 
     # Count occurrences by variant
     counts = (
@@ -66,7 +65,7 @@ if __name__ == "__main__":
         .reset_index(name="n_samples")
     )
 
-    shared = counts[counts["n_samples"] >= 2]
+    shared = counts[counts["n_samples"] >= min_samples]
 
     # Merging with dbSNP_all to get additional information
     merged = pd.merge(shared, dbSNP_all, left_on="pos", right_on="end", how="left")
@@ -80,7 +79,7 @@ if __name__ == "__main__":
             #print(f"Position {row['pos']} does not match dbSNP: REF {row['REF']} vs {row['ref']}, ALT {row['ALT']} vs {alternatives}")
     print(f"{len(found_inRS)} variants found in dbSNP", file=sys.stderr)
 
-    outdir = sys.argv[4]
+    outdir = sys.argv[5]
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     found_inRS.to_csv(

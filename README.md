@@ -44,7 +44,11 @@ conda create -n haplotyping \
     -c conda-forge \
     -c bioconda \
     bcftools htslib tabix jq pandas matplotlib
+
+conda activate haplotyping
 ```
+
+Remember always to activate environment!
 
 ---
 
@@ -52,7 +56,7 @@ conda create -n haplotyping \
 
 ## 1. Phased VCFs
 
-Compressed and indexed phased VCF files generated with tools such as WhatsHap.
+Compressed and indexed phased VCF files generated with tools such as WhatsHap. Please make sure they contain the _whatshap suffix. 
 
 Example:
 
@@ -69,7 +73,7 @@ VCF files should contain:
 Example directory structure:
 
 ```text
-vcfs_wider/
+vcfs/
 ├── sample1_whatshap.vcf.gz
 ├── sample1_whatshap.vcf.gz.tbi
 ├── sample2_whatshap.vcf.gz
@@ -102,15 +106,25 @@ Sample names must match the VCF filenames:
 ```text
 
 23GM4915_whatshap.vcf.gz
-
 25_3624_whatshap.vcf.gz
-
 AT015_whatshap.vcf.gz
 ```
 
 ---
 
-## 3. Genomic position of interest
+## 3. Minimum number of samples
+
+Variants will be extracted from heterozygous carrier samples when shared >= min_samples. Recommended to input 3 samples and look for variants shared between 2 or more.
+
+Example:
+
+```bash
+-m 2
+```
+
+---
+
+## 4. Genomic position of interest
 
 Genomic coordinate associated with the target locus.
 
@@ -129,7 +143,7 @@ The workflow is compatible with:
 
 ---
 
-## 4. Variant annotation file
+## 5. Variant annotation file
 
 Tabular annotation file containing genomic positions and rsIDs. You can download this file from the [UCSC Table Browser] (https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=varRep&hgta_track=dbSnp155Composite&hgta_table=dbSnp155).
 
@@ -157,19 +171,21 @@ bash run_haplotyping.sh \
     -d <vcf_directory> \
     -p <genomic_position> \
     -s <sample1,sample2,...> \
+    -m <minimum_samples> \
     -v <variant_annotation_file> \
     -o <output_directory>
 ```
 
 ## Arguments
 
-| Argument | Description                           |
-| -------- | ------------------------------------- |
-| `-d`   | Directory containing phased VCF files |
-| `-p`   | Genomic position of interest          |
-| `-s`   | Comma-separated sample names          |
-| `-v`   | Variant annotation file               |
-| `-o`   | Output directory                      |
+| Argument | Description                                           |
+| -------- | ----------------------------------------------------- |
+| `-d`   | Directory containing phased VCF files                 |
+| `-p`   | Genomic position of interest                          |
+| `-s`   | Comma-separated sample names                          |
+| `-m`   | Minimum number of samples to extract common haplotype |
+| `-v`   | Variant annotation file                               |
+| `-o`   | Output directory                                      |
 
 ---
 
@@ -180,6 +196,7 @@ bash run_haplotyping.sh \
     -d vcfs \
     -p chr16:89511445 \
     -s 23GM4915,25_3624,AT015 \
+    -m 2 \
     -v hg38_891-092M.summary.tsv \
     -o haplotyping
 ```

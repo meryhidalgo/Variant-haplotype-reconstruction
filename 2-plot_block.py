@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 
 
-def plot_haplotype_blocks(df, pos_mark, region_start, region_end, outdir):	
+def plot_haplotype_blocks(df, pos_mark, region_start, region_end, outdir, min_samples):	
 	plt.figure(figsize=(10,3))
 
 	plt.axvspan(region_start, region_end, alpha=0.2, color="red")
@@ -32,12 +32,20 @@ def plot_haplotype_blocks(df, pos_mark, region_start, region_end, outdir):
 	plt.ylabel("Sample")
 	plt.title("Overlap of haplotype blocks")
 
-	plt.tight_layout()
+	plt.figtext(
+		0.55, 0.03,
+		f"Selected variants shared between ≥{min_samples} samples",
+		ha="center",
+		fontsize=10
+	)
+
+	plt.tight_layout(rect=[0, 0.05, 1, 1])
 	plt.savefig(f"{outdir}/block_plot.png", dpi=300)
 
 if __name__ == "__main__":
-	df = pd.read_csv(sys.argv[1], sep="\t")
-	pos_mark = int(sys.argv[2].split(":")[1])
-	region_start = int(sys.argv[3])
-	region_end = int(sys.argv[4])
-	plot_haplotype_blocks(df, pos_mark, region_start, region_end, sys.argv[5])
+	min_samples = int(sys.argv[1])
+	df = pd.read_csv(sys.argv[2], sep="\t")
+	pos_mark = int(sys.argv[3].split(":")[1])
+	region_start = int(sys.argv[4])
+	region_end = int(sys.argv[5])
+	plot_haplotype_blocks(df, pos_mark, region_start, region_end, sys.argv[6], min_samples)

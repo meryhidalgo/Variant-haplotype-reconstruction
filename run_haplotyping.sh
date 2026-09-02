@@ -1,32 +1,54 @@
 #!/bin/bash
-set -euo pipefail
+set -u
 
 usage() {
     echo "Usage:"
-    echo "  bash run_haplotyping.sh -d <vcf_directory> -p <position> -s <sample1,sample2,...> -v <variant-annotation-file> -o <output_directory>"
+    echo "  bash run_haplotyping.sh -d <vcf_directory> -p <position> -s <sample1,sample2,...> -m <minimum_samples> -v <variant-annotation-file> -o <output_directory>"
+    echo
+    echo "Options:"
+    echo "  -d    VCF directory"
+    echo "  -p    Position"
+    echo "  -s    Comma-separated sample names"
+    echo "  -m    Minimum number of samples"
+    echo "  -v    Variant annotation file"
+    echo "  -o    Output directory"
+    echo "  -h    Show this help message"
+    echo "  --help Show this help message"
     exit 1
 }
 
-while getopts "d:p:s:v:o:" opt; do
+# Initialize variables
+VCF_DIR=""
+POS=""
+SAMPLE_STRING=""
+MIN_SAMPLES=""
+VARIANT_ANNOTATION_FILE=""
+OUTPUT_DIR=""
+
+# Handle --help before getopts
+if [[ "$1" == "--help" ]]; then
+    usage
+fi
+
+while getopts "d:p:s:m:v:o:h" opt; do
     case $opt in
         d) VCF_DIR="$OPTARG" ;;
         p) POS="$OPTARG" ;;
         s) SAMPLE_STRING="$OPTARG" ;;
+        m) MIN_SAMPLES="$OPTARG" ;;
         v) VARIANT_ANNOTATION_FILE="$OPTARG" ;;
         o) OUTPUT_DIR="$OPTARG" ;;
+        h) usage ;;
         *) usage ;;
     esac
 done
-
-if [[ -z "${VCF_DIR:-}" || -z "${POS:-}" || -z "${SAMPLE_STRING:-}" ]]; then
-    usage
-fi
 
 IFS=',' read -ra samples <<< "$SAMPLE_STRING"
 
 mkdir -p ${OUTPUT_DIR}/txtfiles_heteros
 mkdir -p ${OUTPUT_DIR}/txtfiles_all
 
+echo -e "\nProcessing samples..."
 echo "VCF directory: $VCF_DIR"
 echo "Position: $POS"
 echo "Samples: ${samples[*]}"
@@ -51,9 +73,9 @@ for sample in "${samples[@]}"; do
     VCF="${VCF_DIR}/${sample}_whatshap.vcf.gz"
     if [[ ! -f "$VCF" ]]; then
         echo "ERROR: VCF not found for sample $sample"
-        continue
+        exit 1
     fi
-    echo "Processing $sample"
+    #echo "Processing $sample"
     PS=$(bcftools query -r "$POS" -f '[%PS\n]' "$VCF")
     bcftools query \
         -f '%CHROM\t%POS\t%REF\t%ALT\t[%GT]\t[%PS]\n' \
@@ -80,11 +102,18 @@ done
 
 
 # define shared block
-json=$(python 1-define_block.py \
+echo -e "\nDefining shared block..."
+
+json=$(python 1-define_block.py  \
+    "$MIN_SAMPLES" \
     "$POS" \
     "${OUTPUT_DIR}/txtfiles_heteros" \
     "$VARIANT_ANNOTATION_FILE" \
     "${OUTPUT_DIR}/")
+
+if [[ -z "$json" ]]; then
+    exit 1
+fi
 
 start=$(echo "$json" | jq -r .start)
 end=$(echo "$json" | jq -r .end)
@@ -93,9 +122,10 @@ echo "Shared block:"
 echo "START=$start"
 echo "END=$end"
 
+echo -e "\nPlotting haplotype blocks..."
 mkdir -p "${OUTPUT_DIR}/plots"
-
 python 2-plot_block.py \
+    "$MIN_SAMPLES" \
     "${OUTPUT_DIR}/haplotype_blocks.tsv" \
     "$POS" \
     "$start" \
@@ -103,15 +133,16 @@ python 2-plot_block.py \
     "${OUTPUT_DIR}/plots/"
 
 # extract all variants within interval
+chr=$(echo "$POS" | cut -d':' -f1)
 for vcf in ${VCF_DIR}/*.vcf.gz; do
 
     vcf_name=$(basename "$vcf" _whatshap.vcf.gz)
     bcftools query \
         -f '%CHROM\t%POS\t%REF\t%ALT\t[%GT]\t[%PS]\n' \
         "$vcf" |
-    awk -v start="$start" -v end="$end" '
+    awk -v start="$start" -v end="$end" -v chr="$chr" '
         BEGIN {OFS="\t"}
-        ($1 == "chr16" && $2 >= start && $2 <= end) {
+        ($1 == chr && $2 >= start && $2 <= end) {
             gsub(/\//,"|",$5);
             print
         }
@@ -119,6 +150,7 @@ for vcf in ${VCF_DIR}/*.vcf.gz; do
 done
 
 # compare haplotypes
+echo -e "\nComparing haplotypes with all samples..."
 python 3-search_variants.py \
     "$POS" \
     "$hetero_cis_file" \
