@@ -2,20 +2,20 @@ import pandas as pd
 import json, sys, os
 
 
-# esta función recoge un txt con las variantes de un individuo y devuelve un dataframe con la variante de interés 
-# y las variantes cis a ella, es decir, las que están en el mismo haplotipo
+# This function retrieves a text file containing the variants of an individual and returns a dataframe with the variant of interest.
+# And the cis variants of it, that is, those that are in the same haplotype.
 def variantes_cis(archivo, var_interes_pos):
     df = pd.read_csv(archivo, sep="\t", header=None,
                      names=["chr","pos", "REF", "ALT", "GT","PS"])
 
     var_int = df[df["pos"] == var_interes_pos]
     if var_int.empty:
-        print(f"Variante de interés no encontrada en {archivo}")
-        return pd.DataFrame(), archivo  # Variante no encontrada
+        print(f"Variant of interest not found in {archivo}")
+        return pd.DataFrame(), archivo  # Variant not found
 
-    # Sacar haplotipo y PS de la variante de interés
+    # Extract haplotype and PS of the variant of interest
     gt = var_int["GT"].iloc[0].replace("/", "|").split("|")
-    #ps = var_int["PS"].iloc[0] # ya he filtrado por PS en el awk, así que no es necesario
+    #ps = var_int["PS"].iloc[0] # I've already filtered by PS in awk, so it's not necessary.
     hap_int = 0 if gt[0] == "1" else 1
     #print(hap_int)
     results = pd.DataFrame(columns=["pos", "REF", "ALT", "variant"])
@@ -35,13 +35,13 @@ if __name__ == "__main__":
     var_interest_chr = var_interest.split(":")[0]
     var_interest_pos = int(var_interest.split(":")[1])
 
-    txt_dir = sys.argv[2]  # Directorio donde se encuentran los archivos txt
+    txt_dir = sys.argv[2]  # Directory where the txt files are located
     txt_files = [os.path.join(txt_dir, f) for f in os.listdir(txt_dir) if f.endswith("_heteros.txt")]
     if len(txt_files) == 0:
-        print(f"No se encontraron archivos txt en el directorio {txt_dir}")
+        print(f"No txt files were found in the directory {txt_dir}")
         sys.exit(1)
     elif len(txt_files) < 3 or len(txt_files) > 3:
-        print(f"Se encontró un número diferente a 3 archivos txt en el directorio {txt_dir}. Asegúrate de que solo haya los archivos de interés.")
+        print(f"A number other than 3 txt files was found in the directory {txt_dir}. Make sure that only the files of interest are included.")
         sys.exit(1)
     
     hap1 = variantes_cis(txt_files[0], var_interest_pos)
@@ -55,10 +55,10 @@ if __name__ == "__main__":
     hap2["sample"] = "hetero2"
     hap3["sample"] = "hetero3"
 
-    # Concatenar
+    # Concatenate
     all_df = pd.concat([hap1, hap2, hap3])
 
-    # Contar ocurrencias por variante
+    # Count occurrences by variant
     counts = (
         all_df
         .groupby(["pos", "variant", "REF", "ALT"])["sample"]
@@ -77,8 +77,8 @@ if __name__ == "__main__":
         if row["REF"] == row["ref"] and row["ALT"] in alternatives:
             found_inRS.loc[len(found_inRS)] = {"pos": row["pos"], "variant": row["variant"], "dbSNP_id": row["id"], "ref": row["ref"], "alt": row["alt"]}
         #else:
-            #print(f"Posición {row['pos']} no coincide con dbSNP: REF {row['REF']} vs {row['ref']}, ALT {row['ALT']} vs {alternatives}")
-    print(f"Se han encontrado {len(found_inRS)} variantes en dbSNP", file=sys.stderr)
+            #print(f"Position {row['pos']} does not match dbSNP: REF {row['REF']} vs {row['ref']}, ALT {row['ALT']} vs {alternatives}")
+    print(f"{len(found_inRS)} variants found in dbSNP", file=sys.stderr)
 
     outdir = sys.argv[4]
     if not os.path.exists(outdir):
@@ -89,8 +89,8 @@ if __name__ == "__main__":
         index=False
     )
     print(
-        f"La región de interés está entre las posiciones "
-        f"{found_inRS.iloc[0]['pos']} y {found_inRS.iloc[-1]['pos']}",
+        f"The region of interest is between positions "
+        f"{found_inRS.iloc[0]['pos']} and {found_inRS.iloc[-1]['pos']}",
         file=sys.stderr
     )
 

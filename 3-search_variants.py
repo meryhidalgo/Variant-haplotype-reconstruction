@@ -8,7 +8,7 @@ def extract_ps_from_txtfile(path, pos):
     if hit.empty:
         return None
     ps_values = hit["ps"].unique()
-    # si hay más de uno o missing
+    # if there is more than one or missing
     if len(ps_values) == 0 or (len(ps_values) == 1 and ps_values[0] == "."):
         return None
     return ps_values[0]
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     found_inRS_file = sys.argv[2]
     found_inRS= pd.read_csv(found_inRS_file, sep="\t")
 
-    txt_dir = sys.argv[3]  # Directorio donde se encuentran los archivos txt
+    txt_dir = sys.argv[3]  # Directory where the txt files are located
     txt_files = [os.path.join(txt_dir, f) for f in os.listdir(txt_dir) if f.endswith(".txt")]
 
     phased_all = {}
