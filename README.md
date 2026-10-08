@@ -56,7 +56,7 @@ Remember always to activate environment!
 
 ## 1. Phased VCFs
 
-Compressed and indexed phased VCF files generated with tools such as WhatsHap. Please make sure they contain the _whatshap suffix. 
+Compressed and indexed phased VCF files generated with tools such as WhatsHap. Please make sure they contain the _whatshap suffix.
 
 Example:
 
@@ -242,7 +242,30 @@ Returned values include:
 
 ---
 
-## Step 3 — Extract phased variants within the interval
+## Step 3 — Plot shared block
+
+A plot will be generated showing for each sample the region including the variants of interest. This plot summarises, for each sample, the genomic extent of the phased haplotype block (WhatsHap phase set) that contains the variant of interest, and shows how these blocks overlap around the locus.
+
+- **Blue horizontal bars:** start-to-end span of the phase block containing the
+  variant in that sample. Bars are labelled with the sample name.
+- **Dashed vertical line:** position of the variant of interest
+  (e.g. chr16:89,511,445).
+- **Red shaded area:** highlighted region, i.e. the shared haplotypic interval
+  defined by `1-define_block.py` [CONFIRM: interval spanned by the markers shared
+  in >= `min_samples` heterozygous carriers].
+
+```bash
+python3 2-plot_block.py
+```
+Output:
+
+```text
+$output/plots/block_plot.png
+```
+
+---
+
+## Step 4 — Extract phased variants within the interval
 
 All phased variants located within the shared interval are extracted for each sample.
 
@@ -254,12 +277,12 @@ $output/txtfiles_all/
 
 ---
 
-## Step 4 — Compare haplotypes across samples
+## Step 5 — Compare haplotypes across samples
 
 Script:
 
 ```bash
-python3 2-search_variants.py
+python3 3-search_variants.py
 ```
 
 This step identifies:
@@ -288,7 +311,8 @@ variant-haplotype-reconstruction/
 ├── scripts/
 │   ├── run_haplotyping.sh
 │   ├── 1-define_block.py
-│   └── 2-search_variants.py
+│   ├── 2-plot_block.py
+│   └── 3-search_variants.py
 │
 ├── example/
 │   └── hg38_891-092M.summary.tsv
